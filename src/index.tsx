@@ -1,16 +1,16 @@
 import { ActionPanel, Action, List, showToast, Toast, Icon, Cache } from "@raycast/api";
 import { useState, useEffect, useRef, useCallback } from "react";
 import fetch, { AbortError } from "node-fetch";
-import { URLSearchParams } from "url"
+import { URLSearchParams } from "url";
 
 const cache = new Cache();
 
 type Arguments = {
-  query: string
-}
+  query: string;
+};
 
-export default function Command(props: {arguments: Arguments}) {
-  const { state, search } = useSearch("autocomplete-extra", props.arguments.query ?? '');
+export default function Command(props: { arguments: Arguments }) {
+  const { state, search } = useSearch("autocomplete-extra", props.arguments.query ?? "");
 
   return (
     <List
@@ -41,7 +41,10 @@ function SearchListItem({ searchResult }: { searchResult: UrbanAutocompleteRespo
             <Action.Push title="See results" target={<ItemDetails term={searchResult.term} />} />
           </ActionPanel.Section>
           <ActionPanel.Section>
-            <Action.OpenInBrowser title="Open in Browser" url={`https://www.urbandictionary.com/define.php?term=${searchResult.term}`} />
+            <Action.OpenInBrowser
+              title="Open in Browser"
+              url={`https://www.urbandictionary.com/define.php?term=${searchResult.term}`}
+            />
           </ActionPanel.Section>
           <ActionPanel.Section>
             <Action.CopyToClipboard
@@ -56,8 +59,8 @@ function SearchListItem({ searchResult }: { searchResult: UrbanAutocompleteRespo
   );
 }
 
-function ItemDetails({term}: {term: string}) {
-  const {state} = useSearch("define", term)
+function ItemDetails({ term }: { term: string }) {
+  const { state } = useSearch("define", term);
   return (
     <List
       isLoading={state.isLoading}
@@ -72,20 +75,37 @@ function ItemDetails({term}: {term: string}) {
             key={result.defid}
             title={result.definition}
             detail={
-              <List.Item.Detail markdown={getMarkdown(result)} metadata={
-                <List.Item.Detail.Metadata>
-                  <List.Item.Detail.Metadata.Label title="Thumbs up" text={result.thumbs_up.toString()} icon={Icon.Heart}/>
-                  <List.Item.Detail.Metadata.Label title="Thumbs down" text={result.thumbs_down.toString()} icon={Icon.HeartDisabled}/>
-                  <List.Item.Detail.Metadata.Separator />
-                  <List.Item.Detail.Metadata.Label title="Author" text={result.author}/>
-                  <List.Item.Detail.Metadata.Label title="Date" text={new Date(result.written_on).toLocaleDateString()} />
-                </List.Item.Detail.Metadata>
-              }/>
+              <List.Item.Detail
+                markdown={getMarkdown(result)}
+                metadata={
+                  <List.Item.Detail.Metadata>
+                    <List.Item.Detail.Metadata.Label
+                      title="Thumbs up"
+                      text={result.thumbs_up.toString()}
+                      icon={Icon.Heart}
+                    />
+                    <List.Item.Detail.Metadata.Label
+                      title="Thumbs down"
+                      text={result.thumbs_down.toString()}
+                      icon={Icon.HeartDisabled}
+                    />
+                    <List.Item.Detail.Metadata.Separator />
+                    <List.Item.Detail.Metadata.Label title="Author" text={result.author} />
+                    <List.Item.Detail.Metadata.Label
+                      title="Date"
+                      text={new Date(result.written_on).toLocaleDateString()}
+                    />
+                  </List.Item.Detail.Metadata>
+                }
+              />
             }
             actions={
               <ActionPanel>
                 <ActionPanel.Section>
-                  <Action.OpenInBrowser title="Open in Browser" url={`https://www.urbandictionary.com/define.php?term=${term}`} />
+                  <Action.OpenInBrowser
+                    title="Open in Browser"
+                    url={`https://www.urbandictionary.com/define.php?term=${term}`}
+                  />
                 </ActionPanel.Section>
                 <ActionPanel.Section>
                   <Action.CopyToClipboard
@@ -100,20 +120,24 @@ function ItemDetails({term}: {term: string}) {
         ))}
       </List.Section>
     </List>
-  )
+  );
 }
 
 function makeLinks(string: string) {
-  return string.replace(/\[(.*?)\]/gm, (match, term) => `[${term}](https://www.urbandictionary.com/define.php?term=${term.replace(/\s/g, '+')})`)
+  return string.replace(
+    /\[(.*?)\]/gm,
+    (match, term) => `[${term}](https://www.urbandictionary.com/define.php?term=${term.replace(/\s/g, "+")})`
+  );
 }
 
 function getMarkdown(result: UrbanDefineResponseItem) {
-  return (`
+  return `
 ${makeLinks(result.definition)}
-> ${makeLinks(result.example.replace(/\r?\n/gm, '\n> '))}
-`)}
+> ${makeLinks(result.example.replace(/\r?\n/gm, "\n> "))}
+`;
+}
 
-type Endpoint = 'define' | 'autocomplete-extra'
+type Endpoint = "define" | "autocomplete-extra";
 
 function useSearch<T extends Endpoint>(endpoint: T, initial = "") {
   const [state, setState] = useState<SearchState<T>>({ results: [], isLoading: true });
@@ -123,13 +147,13 @@ function useSearch<T extends Endpoint>(endpoint: T, initial = "") {
     async function search(searchText: string) {
       cancelRef.current?.abort();
 
-      const cacheKey = `${endpoint}.${searchText}`
+      const cacheKey = `${endpoint}.${searchText}`;
       if (cache.has(cacheKey)) {
         setState({
           results: JSON.parse(cache.get(cacheKey)!),
           isLoading: false,
-        })
-        return
+        });
+        return;
       }
 
       cancelRef.current = new AbortController();
@@ -143,7 +167,7 @@ function useSearch<T extends Endpoint>(endpoint: T, initial = "") {
           results: results,
           isLoading: false,
         });
-        cache.set(cacheKey, JSON.stringify(results))
+        cache.set(cacheKey, JSON.stringify(results));
       } catch (error) {
         setState((oldState) => ({
           ...oldState,
@@ -175,28 +199,36 @@ function useSearch<T extends Endpoint>(endpoint: T, initial = "") {
 }
 
 type UrbanAutocompleteResponseItem = {
-  preview: string
-  term: string
-}
+  preview: string;
+  term: string;
+};
 
 type UrbanDefineResponseItem = {
-  definition: string
-  permalink: string
-  thumbs_up: number
-  author: string
-  word: string
-  defid: number
-  current_vote: string
-  written_on: string
-  example: string
-  thumbs_down: number
-}
+  definition: string;
+  permalink: string;
+  thumbs_up: number;
+  author: string;
+  word: string;
+  defid: number;
+  current_vote: string;
+  written_on: string;
+  example: string;
+  thumbs_down: number;
+};
 
-type UrbanResponseItem<T extends Endpoint> = T extends 'define' ? UrbanDefineResponseItem : UrbanAutocompleteResponseItem
+type UrbanResponseItem<T extends Endpoint> = T extends "define"
+  ? UrbanDefineResponseItem
+  : UrbanAutocompleteResponseItem;
 
-type UrbanResponseList<T extends Endpoint> = T extends 'define' ? {list: UrbanDefineResponseItem[]} : {results: UrbanAutocompleteResponseItem[]}
+type UrbanResponseList<T extends Endpoint> = T extends "define"
+  ? { list: UrbanDefineResponseItem[] }
+  : { results: UrbanAutocompleteResponseItem[] };
 
-async function performSearch<T extends Endpoint>(endpoint: T, searchText: string, signal: AbortSignal): Promise<UrbanResponseItem<T>[]> {
+async function performSearch<T extends Endpoint>(
+  endpoint: T,
+  searchText: string,
+  signal: AbortSignal
+): Promise<UrbanResponseItem<T>[]> {
   const params = new URLSearchParams();
   params.append("term", searchText);
 
@@ -211,12 +243,11 @@ async function performSearch<T extends Endpoint>(endpoint: T, searchText: string
 
   const json = (await response.json()) as UrbanResponseList<T>;
 
-  if('list' in json) {
-    return json.list
+  if (endpoint === "define") {
+    return json.list;
   }
 
-  return json.results
-
+  return json.results;
 }
 
 interface SearchState<T extends Endpoint> {

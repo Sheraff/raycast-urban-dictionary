@@ -6,7 +6,8 @@
   "icon": "urban.jpeg",
   "author": "Sheraff",
   "categories": [
-    "Web"
+    "Web",
+    "Fun"
   ],
   "license": "MIT",
   "commands": [
