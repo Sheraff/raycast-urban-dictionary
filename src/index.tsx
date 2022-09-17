@@ -234,6 +234,7 @@ async function performSearch<T extends Endpoint>(
 
   const response = await fetch(`https://api.urbandictionary.com/v0/${endpoint}?${params.toString()}`, {
     method: "get",
+    // @ts-expect-error -- not me
     signal: signal,
   });
 
@@ -241,13 +242,13 @@ async function performSearch<T extends Endpoint>(
     throw new Error(response.statusText);
   }
 
-  const json = (await response.json()) as UrbanResponseList<T>;
+  const json = (await response.json()) as UrbanResponseList<typeof endpoint>;
 
-  if (endpoint === "define") {
-    return json.list;
+  if ("list" in json) {
+    return json.list as UrbanResponseItem<typeof endpoint>[];
   }
 
-  return json.results;
+  return json.results as UrbanResponseItem<typeof endpoint>[];
 }
 
 interface SearchState<T extends Endpoint> {
